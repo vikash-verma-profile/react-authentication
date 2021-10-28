@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useContext } from 'react';
+import AuthContext from '../../store/auth-context';
 
 import classes from './AuthForm.module.css';
 
@@ -6,6 +7,7 @@ const AuthForm = () => {
   const emailInputRef = useRef(null);
   const passwordInputRef = useRef(null);
 
+  const authCtx=useContext(AuthContext);
   const [isLogin, setIsLogin] = useState(true);
 
   const switchAuthModeHandler = () => {
@@ -17,30 +19,40 @@ const AuthForm = () => {
     const enteredEmail = emailInputRef.current.value;
     const enteredPassword = passwordInputRef.current.value;
 
+    let url;
     if (isLogin) {
+      url = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyCm0MjXZJojw8nKW0sQYAQcSp2h2sBylXc";
 
     } else {
-      fetch("https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyCm0MjXZJojw8nKW0sQYAQcSp2h2sBylXc", {
-        method: 'Post',
-        body: JSON.stringify({
-          "email": enteredEmail,
-          "password": enteredPassword,
-           returnSecureToken: true
-        }),
-        headers: {
-          'Content-type': "application/json"
-        }
-      }).then(res => {
-        if (res.ok) {
-
-        }
-        else {
-          return res.json().then((data) => {
-            console.log(data);
-          });
-        }
-      });
+      url = "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyCm0MjXZJojw8nKW0sQYAQcSp2h2sBylXc";
     }
+    fetch(url, {
+      method: 'Post',
+      body: JSON.stringify({
+        "email": enteredEmail,
+        "password": enteredPassword,
+        returnSecureToken: true
+      }),
+      headers: {
+        'Content-type': "application/json"
+      }
+    }).then(res => {
+      if (res.ok) {
+        return res.json();
+      }
+      else {
+        return res.json().then((data) => {
+          let errorMessage = "Authentication Failed"
+          alert(errorMessage);
+        });
+      }
+    }).then((data)=>{
+      
+      authCtx.login(data.idToken);
+
+    }).catch((err)=>{
+      alert(err.message);
+    });
   });
 
   return (
